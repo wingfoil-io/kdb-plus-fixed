@@ -7,9 +7,9 @@ extern crate float_cmp;
 
 use chrono::prelude::*;
 use chrono::Duration;
-use kdbplus::ipc::error::Error;
-use kdbplus::ipc::*;
-use kdbplus::*;
+use kdb_plus_fixed::ipc::error::Error;
+use kdb_plus_fixed::ipc::*;
+use kdb_plus_fixed::*;
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 //                        Macros                         //

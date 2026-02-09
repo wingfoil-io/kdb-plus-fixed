@@ -15,4 +15,4 @@ crate-type=["cdylib"]
 
 [dependencies]
 libc="0.2"
-kdbplus={path="../kdbplus", features=["api"]}
+kdb-plus-fixed={path="../kdbplus", features=["api"]}

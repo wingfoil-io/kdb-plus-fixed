@@ -6,11 +6,11 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 #[macro_use]
-extern crate kdbplus;
+extern crate kdb_plus_fixed;
 
-use kdbplus::api::native::*;
-use kdbplus::api::*;
-use kdbplus::{qattribute, qinf_base, qninf_base, qnull_base, qtype};
+use kdb_plus_fixed::api::native::*;
+use kdb_plus_fixed::api::*;
+use kdb_plus_fixed::{qattribute, qinf_base, qninf_base, qnull_base, qtype};
 use libc::{pipe, send};
 use std::ffi::c_void;
 
