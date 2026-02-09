@@ -1,11 +1,11 @@
 [package]
-name = "kdbplus"
-version = "0.3.8"
-authors = ["diamondrod"]
+name = "kdb-plus-fixed"
+version = "0.4.0
+authors = ["diamondrod", "rollo-b2c2"]
 edition = "2021"
 license = "Apache-2.0"
-repository = "https://github.com/diamondrod/kdbplus"
-documentation = "https://docs.rs/kdbplus"
+repository = "https://github.com/wingfoil-io/kdb-plus-fixed"
+documentation = "https://docs.rs/kdb-plus-fixed"
 readme = "../README.md"
 description = """
 Dual q/kdb+ interface for API to build a shared library and an IPC client.
