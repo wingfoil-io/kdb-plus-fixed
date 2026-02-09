@@ -1,3 +1,5 @@
+#![allow(clippy::not_unsafe_ptr_arg_deref)]
+
 //! This module is provided as examples of "api" feature of `kdbplus` crate. The functions defined here will be
 //!  used for simple tests.
 
@@ -6,11 +8,11 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 #[macro_use]
-extern crate kdbplus;
+extern crate kdb_plus_fixed;
 
-use kdbplus::api::native::*;
-use kdbplus::api::*;
-use kdbplus::{qattribute, qinf_base, qninf_base, qnull_base, qtype};
+use kdb_plus_fixed::api::native::*;
+use kdb_plus_fixed::api::*;
+use kdb_plus_fixed::{qattribute, qinf_base, qninf_base, qnull_base, qtype};
 use libc::{pipe, send};
 use std::ffi::c_void;
 
@@ -730,7 +732,7 @@ pub extern "C" fn enable_counter(socket: K) -> K {
     unsafe {
         let result = sd1(socket.get_int().expect("oh no"), counter);
         if result.get_type() == qtype::NULL || result.get_type() == qtype::ERROR {
-            return krr(null_terminated_str_to_const_S("Failed to hook\0"));
+            krr(null_terminated_str_to_const_S("Failed to hook\0"))
         } else {
             KNULL
         }
@@ -1064,7 +1066,7 @@ extern "C" fn callback(socket: I) -> K {
 
 #[no_mangle]
 pub extern "C" fn plumber(_: K) -> K {
-    if 0 != unsafe { pipe(PIPE.as_mut_ptr()) } {
+    if 0 != unsafe { pipe(std::ptr::addr_of_mut!(PIPE).cast()) } {
         return new_error("Failed to create pipe\0");
     }
     if KNULL == register_callback(unsafe { PIPE[0] }, callback) {
@@ -1103,8 +1105,8 @@ impl Planet {
     fn new(name: &str, population: i64, water: bool) -> Self {
         Planet {
             name: name.to_string(),
-            population: population,
-            water: water,
+            population,
+            water,
         }
     }
 
@@ -1124,7 +1126,7 @@ impl Planet {
 /// Example of `set_type`.
 #[no_mangle]
 pub extern "C" fn eden(_: K) -> K {
-    let earth = Planet::new("earth", 7500_000_000, true);
+    let earth = Planet::new("earth", 7_500_000_000, true);
     let mut foreign = new_list(qtype::COMPOUND_LIST, 2);
     let foreign_slice = foreign.as_mut_slice::<K>();
     foreign_slice[0] = drop_q_object as K;

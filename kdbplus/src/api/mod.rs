@@ -5,8 +5,8 @@
 //!  are:
 //! - `knk`
 //! - `k`
-//! These functions are using elipsis (`...`) as its argument and cannot be provided with a stable distribution. When you need to use
-//!  either of them you can find them under `native` namespace together with the other naked C API functions.
+//!   These functions are using elipsis (`...`) as its argument and cannot be provided with a stable distribution. When you need to use
+//!   either of them you can find them under `native` namespace together with the other naked C API functions.
 //!
 //! *Notes:*
 //!
@@ -98,6 +98,9 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
+#![allow(clippy::not_unsafe_ptr_arg_deref)]
+#![allow(clippy::wrong_self_convention)]
+#![allow(clippy::len_without_is_empty)]
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++//
 // >> Load Libraries
@@ -772,7 +775,7 @@ pub trait KUtility {
     /// ```
     /// # Note
     /// - Concrete type of `T` is not checked. Its type must be either of `I`, `J`, `E` and `F` and it must be compatible
-    ///  with the list type. For example, timestamp list requires `J` type atom.
+    ///   with the list type. For example, timestamp list requires `J` type atom.
     /// - For symbol list, use [`push_symbol`](#fn.push_symbol) or [`push_symbol_n`](#fn.push_symbol_n).
     fn push_raw<T>(&mut self, atom: T) -> Result<K, &'static str>;
 
@@ -932,7 +935,7 @@ pub trait KUtility {
 impl U {
     /// Create 16-byte GUID object.
     pub fn new(guid: [u8; 16]) -> Self {
-        U { guid: guid }
+        U { guid }
     }
 }
 
@@ -965,8 +968,7 @@ impl KUtility for K {
                     let row = new_list(qtype::COMPOUND_LIST, num_columns);
                     let row_slice = row.as_mut_slice::<K>();
                     let mut enum_source_index = 0;
-                    let mut i = 0;
-                    for column in values.as_mut_slice::<K>() {
+                    for (i, column) in values.as_mut_slice::<K>().iter().enumerate() {
                         match column.get_type() {
                             qtype::BOOL_LIST => {
                                 row_slice[i] = new_bool(column.as_mut_slice::<G>()[index] as i32);
@@ -1049,7 +1051,6 @@ impl KUtility for K {
                             // There are no other list type
                             _ => unreachable!(),
                         }
-                        i += 1;
                     }
                     Ok(new_dictionary(increment_reference_count(keys), row))
                 }
@@ -1181,7 +1182,7 @@ impl KUtility for K {
     fn get_error_string(&self) -> Result<&str, &'static str> {
         match unsafe { (**self).qtype } {
             qtype::ERROR => {
-                if unsafe { (**self).value.symbol } != std::ptr::null_mut::<C>() {
+                if !unsafe { (**self).value.symbol }.is_null() {
                     Ok(S_to_str(unsafe { (**self).value.symbol }))
                 } else {
                     Err("not an error\0")
@@ -1296,7 +1297,8 @@ impl KUtility for K {
     fn set_attribute(&mut self, attribute: i8) -> Result<(), &'static str> {
         match unsafe { (**self).qtype } {
             _t @ qtype::BOOL_LIST..=qtype::TIME_LIST => {
-                Ok(unsafe { (**self).attribute = attribute })
+                unsafe { (**self).attribute = attribute };
+                Ok(())
             }
             _ => Err("not a simple list\0"),
         }
@@ -2130,8 +2132,7 @@ pub fn error_to_string(error: K) -> K {
 ///  To return a general null for inner functions, use [`new_null`](fn.new_null.html) instead.
 #[inline]
 pub fn is_error(catched: K) -> bool {
-    (unsafe { (*catched).qtype } == qtype::ERROR)
-        && (unsafe { (*catched).value.symbol } != std::ptr::null_mut::<C>())
+    (unsafe { (*catched).qtype } == qtype::ERROR) && !unsafe { (*catched).value.symbol }.is_null()
 }
 
 //%% Symbol %%//vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv/
@@ -2514,7 +2515,9 @@ pub fn unpin_symbol() -> I {
 pub fn drop_q_object(obj: K) -> K {
     let obj_slice = obj.as_mut_slice::<K>();
     // Take ownership of `K` object from a raw pointer and drop at the end of this scope.
-    unsafe { Box::from_raw(obj_slice[1]) };
+    unsafe {
+        let _ = Box::from_raw(obj_slice[1]);
+    };
     // Fill the list with null.
     obj_slice.copy_from_slice(&[KNULL, KNULL]);
     obj
@@ -2612,12 +2615,8 @@ pub fn load_as_q_function(func: *const V, n: J) -> K {
 /// ```no_run
 /// use kdbplus::api::*;
 ///
-/// fn main(){
-///
-///   let days=ymd_to_days(2020, 4, 1);
-///   assert_eq!(days, 7396);
-///
-/// }
+/// let days=ymd_to_days(2020, 4, 1);
+/// assert_eq!(days, 7396);
 /// ```
 #[inline]
 pub fn ymd_to_days(year: I, month: I, date: I) -> I {
@@ -2629,12 +2628,8 @@ pub fn ymd_to_days(year: I, month: I, date: I) -> I {
 /// ```no_run
 /// use kdbplus::api::*;
 ///
-/// fn main(){
-///
-///   let number=days_to_ymd(7396);
-///   assert_eq!(number, 20200401);
-///
-/// }
+/// let number=days_to_ymd(7396);
+/// assert_eq!(number, 20200401);
 /// ```
 #[inline]
 pub fn days_to_ymd(days: I) -> I {
@@ -2690,10 +2685,10 @@ pub fn days_to_ymd(days: I) -> I {
 /// ```
 /// # Note
 /// - To convert a list provided externally (i.e., passed from a q process), apply
-///  [`increment_reference_count`](fn.increment_reference_count.html) before converting the list.
+///   [`increment_reference_count`](fn.increment_reference_count.html) before converting the list.
 /// - Enum elements from different enum sources must be contained in a compound list. Therefore
-///  this function intentionally restricts the number of enum sources to one so that user switches
-///  a simple list to a compound list when the second enum sources are provided.
+///   this function intentionally restricts the number of enum sources to one so that user switches
+///   a simple list to a compound list when the second enum sources are provided.
 pub fn simple_to_compound(simple: K, enum_source: &str) -> K {
     let size = simple.len() as usize;
     let compound = new_list(qtype::COMPOUND_LIST, size as J);

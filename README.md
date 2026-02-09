@@ -1,3 +1,8 @@
+
+# kdb-plus-fixed
+
+This a fork of [kdbplus](https://github.com/diamondrod/kdbplus), but with some critical fixes and without it's latest commits, which introduced some defects.   There is also [kxkdb](https://github.com/KxSystems/kxkdb), which is also a fork of kdbplus and has the same defects.  Neither of these project appear to be maintained any more.
+
 # Rust Dual Interface for q/kdb+
 
 As Rust is becoming a popular programming language for its performance and type safety, the desire to use it with still a maniac time-series database kdb+ is brewing. The aspiration is understandable since we know kdb+ is fast and its interface or a shared library should be fast as well. This interface was created to satisfy such a natural demand, furthermore, in a manner users do not feel any pain to use. The notrious esoteric function names of the q/kdb+ C API is not an interest of Rust developers.

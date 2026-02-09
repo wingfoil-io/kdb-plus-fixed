@@ -1,4 +1,4 @@
-use kdbplus::ipc::*;
+use kdb_plus_fixed::ipc::*;
 use std::io;
 use std::io::Write;
 

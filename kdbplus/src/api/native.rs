@@ -997,12 +997,8 @@ extern "C" {
     /// use kdbplus::api::*;
     /// use kdbplus::api::native::*;
     ///
-    /// fn main(){
-    ///
-    ///   let days=unsafe{ymd(2020, 4, 1)};
-    ///   assert_eq!(days, 7396);
-    ///
-    /// }
+    /// let days=unsafe{ymd(2020, 4, 1)};
+    /// assert_eq!(days, 7396);
     /// ```
     pub fn ymd(year: I, month: I, date: I) -> I;
 
@@ -1012,12 +1008,8 @@ extern "C" {
     /// use kdbplus::api::*;
     /// use kdbplus::api::native::*;
     ///
-    /// fn main(){
-    ///
-    ///   let number=unsafe{dj(7396)};
-    ///   assert_eq!(number, 20200401);
-    ///
-    /// }
+    /// let number=unsafe{dj(7396)};
+    /// assert_eq!(number, 20200401);
     /// ```
     pub fn dj(days: I) -> I;
 

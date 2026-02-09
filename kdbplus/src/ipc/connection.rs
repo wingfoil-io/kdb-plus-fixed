@@ -120,6 +120,7 @@ pub mod qmsg_type {
 //%% QStream Acceptor %%//vvvvvvvvvvvvvvvvvvvvvvvvvvv/
 
 /// Map from user name to password hashed with SHA1.
+#[allow(clippy::declare_interior_mutable_const)]
 const ACCOUNTS: Lazy<HashMap<String, String>> = Lazy::new(|| {
     // Map from user to password
     let mut map: HashMap<String, String> = HashMap::new();
@@ -168,7 +169,7 @@ pub enum ConnectionMethod {
 #[async_trait]
 pub trait Query: Send + Sync {
     /// Serialize into q IPC bytes including a header (encoding, message type, compresssion flag and total message length).
-    ///  If the connection is within the same host, the message is not compressed under any conditions.
+    ///   If the connection is within the same host, the message is not compressed under any conditions.
     /// # Parameters
     /// - `message_type`: Message type. One of followings:
     ///   - `qmsg_type::asynchronous`
@@ -326,7 +327,7 @@ impl Query for K {
         if message_length > 1992 && !is_local {
             // encode, message type, 0x00 for compression, 0x00 for reserved and 0x00000000 for total size
             let mut message = Vec::with_capacity(message_length + 8);
-            message.extend_from_slice(&[ENCODING, message_type as u8, 0, 0, 0, 0, 0, 0]);
+            message.extend_from_slice(&[ENCODING, message_type, 0, 0, 0, 0, 0, 0]);
             message.append(&mut byte_message);
             // Try to encode entire message.
             match compress(message).await {
@@ -344,7 +345,7 @@ impl Query for K {
         } else {
             // encode, message type, 0x00 for compression and 0x00 for reserved
             let mut message = Vec::with_capacity(message_length + MessageHeader::size());
-            message.extend_from_slice(&[ENCODING, message_type as u8, 0, 0]);
+            message.extend_from_slice(&[ENCODING, message_type, 0, 0]);
             // Total length of body
             message.extend_from_slice(&total_length_bytes);
             message.append(&mut byte_message);
@@ -364,8 +365,8 @@ impl QStream {
         is_local: bool,
     ) -> Self {
         QStream {
-            stream: stream,
-            method: method,
+            stream,
+            method,
             listener: is_listener,
             local: is_local,
         }
@@ -427,10 +428,7 @@ impl QStream {
         match method {
             ConnectionMethod::TCP => {
                 let stream = connect_tcp(host, port, credential).await?;
-                let is_local = match host {
-                    "localhost" | "127.0.0.1" => true,
-                    _ => false,
-                };
+                let is_local = matches!(host, "localhost" | "127.0.0.1");
                 Ok(QStream::new(
                     Box::new(stream),
                     ConnectionMethod::TCP,
@@ -507,7 +505,7 @@ impl QStream {
     /// ```
     /// # Note
     /// - TLS acceptor sets `.kdbplus.close_tls_connection_` on q clien via an asynchronous message. This function is necessary to close
-    ///  the socket from the server side without crashing server side application.
+    ///   the socket from the server side without crashing server side application.
     /// - TLS acceptor and UDS acceptor use specific environmental variables to work. See the [Environmental Variable](../ipc/index.html#environmentl-variables) section for details.
     pub async fn accept(method: ConnectionMethod, host: &str, port: u16) -> Result<Self> {
         match method {
@@ -517,7 +515,7 @@ impl QStream {
                 // Listen to the endpoint.
                 let (mut socket, ip_address) = listener.accept().await?;
                 // Read untill null bytes and send back capacity.
-                while let Err(_) = read_client_input(&mut socket).await {
+                while (read_client_input(&mut socket).await).is_err() {
                     // Continue to listen in case of error.
                     socket = listener.accept().await?.0;
                 }
@@ -544,7 +542,7 @@ impl QStream {
                     .await
                     .expect("failed to accept TLS connection");
                 // Read untill null bytes and send back a capacity.
-                while let Err(_) = read_client_input(&mut tls_socket).await {
+                while (read_client_input(&mut tls_socket).await).is_err() {
                     // Continue to listen in case of error.
                     socket = listener.accept().await?.0;
                     tls_socket = tls_acceptor
@@ -553,12 +551,8 @@ impl QStream {
                         .expect("failed to accept TLS connection");
                 }
                 // TLS is always a remote connection
-                let mut qstream = QStream::new(
-                    Box::new(TlsStream::from(tls_socket)),
-                    ConnectionMethod::TCP,
-                    true,
-                    false,
-                );
+                let mut qstream =
+                    QStream::new(Box::new(tls_socket), ConnectionMethod::TCP, true, false);
                 // In order to close the connection from the server side, it needs to tell a client to close the connection.
                 // The `kdbplus_close_tls_connection_` will be called from the server at shutdown.
                 qstream
@@ -572,11 +566,11 @@ impl QStream {
                 let abstract_sockfile_ = format!("\x00{}", uds_path);
                 let abstract_sockfile = Path::new(&abstract_sockfile_);
                 // Bind to the file
-                let listener = UnixListener::bind(&abstract_sockfile).unwrap();
+                let listener = UnixListener::bind(abstract_sockfile).unwrap();
                 // Listen to the endpoint
                 let (mut socket, _) = listener.accept().await?;
                 // Read untill null bytes and send back capacity.
-                while let Err(_) = read_client_input(&mut socket).await {
+                while (read_client_input(&mut socket).await).is_err() {
                     // Continue to listen in case of error.
                     socket = listener.accept().await?.0;
                 }
@@ -721,7 +715,6 @@ impl QStreamInner for TlsStream<TcpStream> {
             // No reason to compress.
             self.send_async_message(&".kdbplus.close_tls_connection_[]", false)
                 .await
-                .into()
         } else {
             self.get_mut().shutdown()?;
             Ok(())
@@ -829,11 +822,11 @@ impl MessageHeader {
     /// Constructor.
     fn new(encoding: u8, message_type: u8, compressed: u8, length: u32) -> Self {
         MessageHeader {
-            encoding: encoding,
-            message_type: message_type,
-            compressed: compressed,
+            encoding,
+            message_type,
+            compressed,
             _unused: 0,
-            length: length,
+            length,
         }
     }
 
@@ -919,7 +912,7 @@ where
 
     // Placeholder of common capablility
     let mut cap = [0u8; 1];
-    if let Err(_) = socket.read_exact(&mut cap).await {
+    if (socket.read_exact(&mut cap).await).is_err() {
         // Connection is closed in case of authentication failure
         Err(io::Error::new(io::ErrorKind::ConnectionAborted, "authentication failure").into())
     } else {
@@ -1016,6 +1009,7 @@ where
                     passed_credential
                         .push_str(str::from_utf8(&client_input[0..index]).expect("invalid bytes"));
                     let credential = passed_credential.as_str().split(':').collect::<Vec<&str>>();
+                    #[allow(clippy::borrow_interior_mutable_const)]
                     if let Some(encoded) = ACCOUNTS.get(&credential[0].to_string()) {
                         // User exists
                         let mut hasher = Sha1::new();
@@ -1070,23 +1064,19 @@ async fn build_identity_from_cert() -> Result<Identity> {
             reader.read_to_end(&mut der).await?;
             // Create identity.
             if let Ok(identity) = Identity::from_pkcs12(&der, &password) {
-                return Ok(identity);
+                Ok(identity)
             } else {
-                return Err(
-                    io::Error::new(io::ErrorKind::InvalidData, "authentication failed").into(),
-                );
+                Err(io::Error::new(io::ErrorKind::InvalidData, "authentication failed").into())
             }
         } else {
-            return Err(io::Error::new(
+            Err(io::Error::new(
                 io::ErrorKind::NotFound,
                 "KDBPLUS_TLS_KEY_FILE_SECRET is not set",
             )
-            .into());
+            .into())
         }
     } else {
-        return Err(
-            io::Error::new(io::ErrorKind::NotFound, "KDBPLUS_TLS_KEY_FILE is not set").into(),
-        );
+        Err(io::Error::new(io::ErrorKind::NotFound, "KDBPLUS_TLS_KEY_FILE is not set").into())
     }
 }
 
@@ -1116,8 +1106,7 @@ where
 
     // Read body
     let body_length = header.length as usize - MessageHeader::size();
-    let mut body: Vec<u8> = Vec::with_capacity(body_length);
-    body.resize(body_length, 0_u8);
+    let mut body: Vec<u8> = vec![0; body_length];
     if let Err(err) = socket.read_exact(&mut body).await {
         // Fails if q process fails before reading the body
         return Err(io::Error::new(
@@ -1150,9 +1139,7 @@ async fn compress(raw: Vec<u8>) -> (bool, Vec<u8>) {
     let mut h0 = 0_usize;
     let mut h = 0_usize;
     let mut g: bool;
-    let mut compressed: Vec<u8> = Vec::with_capacity((raw.len()) / 2);
-    // Assure that vector is filled with 0
-    compressed.resize((raw.len()) / 2, 0_u8);
+    let mut compressed: Vec<u8> = vec![0; (raw.len()) / 2];
 
     // Start index of compressed body
     // 12 bytes are reserved for the header + size of raw bytes
@@ -1275,9 +1262,7 @@ async fn decompress(compressed: Vec<u8>, encoding: u8) -> Vec<u8> {
             ) - 8
         }
     };
-    let mut decompressed: Vec<u8> = Vec::with_capacity(size as usize);
-    // Assure that vector is filled with 0
-    decompressed.resize(size as usize, 0_u8);
+    let mut decompressed: Vec<u8> = vec![0; size as usize];
 
     // Start index of compressed body.
     // 8 bytes have already been removed as header
@@ -1285,12 +1270,12 @@ async fn decompress(compressed: Vec<u8>, encoding: u8) -> Vec<u8> {
     let mut aa = [0_i32; 256];
     while s < decompressed.len() {
         if i == 0 {
-            f = (0xff & compressed[d]) as usize;
+            f = compressed[d] as usize;
             d += 1;
             i = 1;
         }
         if (f & i) != 0 {
-            r = aa[(0xff & compressed[d]) as usize] as usize;
+            r = aa[compressed[d] as usize] as usize;
             d += 1;
             decompressed[s] = decompressed[r];
             s += 1;
@@ -1298,7 +1283,7 @@ async fn decompress(compressed: Vec<u8>, encoding: u8) -> Vec<u8> {
             decompressed[s] = decompressed[r];
             s += 1;
             r += 1;
-            n = (0xff & compressed[d]) as usize;
+            n = compressed[d] as usize;
             d += 1;
             for m in 0..n {
                 decompressed[s + m] = decompressed[r + m];
@@ -1309,7 +1294,7 @@ async fn decompress(compressed: Vec<u8>, encoding: u8) -> Vec<u8> {
             d += 1;
         }
         while p < s - 1 {
-            aa[((0xff & decompressed[p]) ^ (0xff & decompressed[p + 1])) as usize] = p as i32;
+            aa[(decompressed[p] ^ decompressed[p + 1]) as usize] = p as i32;
             p += 1;
         }
         if (f & i) != 0 {
