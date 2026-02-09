@@ -2132,8 +2132,7 @@ pub fn error_to_string(error: K) -> K {
 ///  To return a general null for inner functions, use [`new_null`](fn.new_null.html) instead.
 #[inline]
 pub fn is_error(catched: K) -> bool {
-    (unsafe { (*catched).qtype } == qtype::ERROR)
-        && !unsafe { (*catched).value.symbol }.is_null()
+    (unsafe { (*catched).qtype } == qtype::ERROR) && !unsafe { (*catched).value.symbol }.is_null()
 }
 
 //%% Symbol %%//vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv/
@@ -2516,7 +2515,9 @@ pub fn unpin_symbol() -> I {
 pub fn drop_q_object(obj: K) -> K {
     let obj_slice = obj.as_mut_slice::<K>();
     // Take ownership of `K` object from a raw pointer and drop at the end of this scope.
-    unsafe { let _ = Box::from_raw(obj_slice[1]); };
+    unsafe {
+        let _ = Box::from_raw(obj_slice[1]);
+    };
     // Fill the list with null.
     obj_slice.copy_from_slice(&[KNULL, KNULL]);
     obj
