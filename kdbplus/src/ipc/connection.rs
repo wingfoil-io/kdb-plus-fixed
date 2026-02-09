@@ -551,12 +551,8 @@ impl QStream {
                         .expect("failed to accept TLS connection");
                 }
                 // TLS is always a remote connection
-                let mut qstream = QStream::new(
-                    Box::new(tls_socket),
-                    ConnectionMethod::TCP,
-                    true,
-                    false,
-                );
+                let mut qstream =
+                    QStream::new(Box::new(tls_socket), ConnectionMethod::TCP, true, false);
                 // In order to close the connection from the server side, it needs to tell a client to close the connection.
                 // The `kdbplus_close_tls_connection_` will be called from the server at shutdown.
                 qstream
@@ -1070,9 +1066,7 @@ async fn build_identity_from_cert() -> Result<Identity> {
             if let Ok(identity) = Identity::from_pkcs12(&der, &password) {
                 Ok(identity)
             } else {
-                Err(
-                    io::Error::new(io::ErrorKind::InvalidData, "authentication failed").into(),
-                )
+                Err(io::Error::new(io::ErrorKind::InvalidData, "authentication failed").into())
             }
         } else {
             Err(io::Error::new(
@@ -1082,9 +1076,7 @@ async fn build_identity_from_cert() -> Result<Identity> {
             .into())
         }
     } else {
-        Err(
-            io::Error::new(io::ErrorKind::NotFound, "KDBPLUS_TLS_KEY_FILE is not set").into(),
-        )
+        Err(io::Error::new(io::ErrorKind::NotFound, "KDBPLUS_TLS_KEY_FILE is not set").into())
     }
 }
 
