@@ -27,6 +27,7 @@ default = []
 # Select one of two features
 api = []
 ipc = ["once_cell", "chrono", "trust-dns-resolver", "tokio", "tokio-native-tls", "async-trait", "sha1_smol"]
+integration-tests = ["ipc"]
 
 [dev-dependencies]
 # IPC test and example

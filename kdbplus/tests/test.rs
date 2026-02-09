@@ -29,6 +29,7 @@ macro_rules! assert_eq_float_vec {
     };
 }
 
+#[cfg(feature = "integration-tests")]
 macro_rules! add_null {
     ($obj: expr) => {
         K::new_compound_list(vec![K::new_null(), $obj])
@@ -2047,6 +2048,7 @@ fn push_pop_test() -> Result<()> {
 }
 
 #[async_std::test]
+#[cfg(feature = "integration-tests")]
 async fn functional_message_test(socket: &mut Qsocket) -> Result<()> {
     // Connect to q process
     let mut socket = QStream::connect(ConnectionMethod::TCP, "localhost", 5000, "kdbuser:pass")
@@ -2833,6 +2835,7 @@ async fn functional_message_test(socket: &mut Qsocket) -> Result<()> {
 }
 
 #[async_std::test]
+#[cfg(feature = "integration-tests")]
 async fn compression_test() -> Result<()> {
     // Connect to q process
     let mut socket = QStream::connect(ConnectionMethod::TCP, "localhost", 5000_u16, "kdbuser:pass")
