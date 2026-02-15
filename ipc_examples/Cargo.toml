@@ -1,6 +1,6 @@
 [package]
 name = "ipc_examples"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["diamondrod"]
 edition = "2021"
 description = """
