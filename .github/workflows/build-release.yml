@@ -27,18 +27,28 @@ jobs:
           - target: x86_64-unknown-linux-gnu
             runner: ubuntu-latest
             artifact: linux-x86_64
+            artifact_dir: target
           - target: x86_64-pc-windows-msvc
             runner: windows-latest
             artifact: windows-x86_64
+            artifact_dir: target
+            # api_examples is a kdb+ plugin that requires q.lib at link time on
+            # Windows. Since q.lib is not vendored, exclude it from CI; the core
+            # kdbplus library still builds and is verified.
+            exclude_examples: true
           - target: x86_64-apple-darwin
-            runner: macos-13-large
+            runner: macos-latest
             artifact: macos-x86_64
+            artifact_dir: target/x86_64-apple-darwin
+            build_flags: --target x86_64-apple-darwin
           - target: aarch64-apple-darwin
             runner: macos-latest
             artifact: macos-arm64
+            artifact_dir: target
           - target: aarch64-unknown-linux-gnu
             runner: ubuntu-24.04-arm
             artifact: linux-arm64
+            artifact_dir: target
 
     steps:
       - uses: actions/checkout@v4
@@ -57,19 +67,19 @@ jobs:
 
       - name: Build (release)
         if: ${{ inputs.profile == 'release' }}
-        run: cargo build --release --all-features --verbose
+        run: cargo build --release --all-features --verbose ${{ matrix.build_flags }} ${{ matrix.exclude_examples && '--workspace --exclude api_examples' || '' }}
 
       - name: Build (debug)
         if: ${{ inputs.profile == 'debug' }}
-        run: cargo build --all-features --verbose
+        run: cargo build --all-features --verbose ${{ matrix.build_flags }} ${{ matrix.exclude_examples && '--workspace --exclude api_examples' || '' }}
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: kdb-plus-fixed-${{ matrix.artifact }}
           path: |
-            target/${{ inputs.profile == 'release' && 'release' || 'debug' }}/libkdbplus.*
-            target/${{ inputs.profile == 'release' && 'release' || 'debug' }}/*.dll
-            target/${{ inputs.profile == 'release' && 'release' || 'debug' }}/*.dylib
+            ${{ matrix.artifact_dir }}/${{ inputs.profile == 'release' && 'release' || 'debug' }}/libkdbplus.*
+            ${{ matrix.artifact_dir }}/${{ inputs.profile == 'release' && 'release' || 'debug' }}/*.dll
+            ${{ matrix.artifact_dir }}/${{ inputs.profile == 'release' && 'release' || 'debug' }}/*.dylib
           if-no-files-found: warn
           retention-days: 30
