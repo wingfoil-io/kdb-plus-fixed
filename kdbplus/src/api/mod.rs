@@ -1194,6 +1194,7 @@ impl KUtility for K {
 
     #[inline]
     fn get_attribute(&self) -> i8 {
+        #[allow(clippy::unnecessary_cast)]
         unsafe { (**self).attribute as i8 }
     }
 
