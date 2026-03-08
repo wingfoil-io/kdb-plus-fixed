@@ -679,7 +679,7 @@ pub trait KUtility {
     ///   }
     /// }
     /// ```
-    fn get_attribute(&self) -> C;
+    fn get_attribute(&self) -> i8;
 
     /// Get a reference count of a q object.
     fn get_refcount(&self) -> I;
@@ -1194,7 +1194,7 @@ impl KUtility for K {
 
     #[inline]
     fn get_attribute(&self) -> i8 {
-        unsafe { (**self).attribute }
+        unsafe { (**self).attribute as i8 }
     }
 
     #[inline]
@@ -1297,7 +1297,7 @@ impl KUtility for K {
     fn set_attribute(&mut self, attribute: i8) -> Result<(), &'static str> {
         match unsafe { (**self).qtype } {
             _t @ qtype::BOOL_LIST..=qtype::TIME_LIST => {
-                unsafe { (**self).attribute = attribute };
+                unsafe { (**self).attribute = attribute as C };
                 Ok(())
             }
             _ => Err("not a simple list\0"),

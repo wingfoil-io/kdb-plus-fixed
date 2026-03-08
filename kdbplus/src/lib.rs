@@ -130,17 +130,16 @@ pub mod qattribute {
     //!  tie them up as related items rather than scattered values. Hence user should use these
     //!  indicators with `qattribute::` prefix, e.g., `qattribute::UNIQUE`.
 
-    use std::os::raw::c_char;
     /// Indicates no attribute is appended on the q object.
-    pub const NONE: c_char = 0;
+    pub const NONE: i8 = 0;
     /// Sorted attribute, meaning that the q list is sorted in ascending order.
-    pub const SORTED: c_char = 1;
+    pub const SORTED: i8 = 1;
     /// Unique attribute, meaning that each element in the q list has a unique value within the list.
-    pub const UNIQUE: c_char = 2;
+    pub const UNIQUE: i8 = 2;
     /// Parted attribute, meaning that all the elements with the same value in the q object appear in a chunk.
-    pub const PARTED: c_char = 3;
+    pub const PARTED: i8 = 3;
     /// Grouped attribute, meaning that the elements of the q list are grouped with their indices by values implicitly.
-    pub const GROUPED: c_char = 4;
+    pub const GROUPED: i8 = 4;
 }
 
 pub mod qnull_base {
