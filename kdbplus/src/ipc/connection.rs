@@ -6,6 +6,7 @@ use super::serialize::ENCODING;
 use super::Result;
 use super::{qtype, K};
 use async_trait::async_trait;
+use hickory_resolver::TokioAsyncResolver;
 use io::BufRead;
 use once_cell::sync::Lazy;
 use sha1_smol::Sha1;
@@ -22,7 +23,6 @@ use tokio_native_tls::native_tls::{
     Identity, TlsAcceptor as TlsAcceptorInner, TlsConnector as TlsConnectorInner,
 };
 use tokio_native_tls::{TlsAcceptor, TlsConnector, TlsStream};
-use hickory_resolver::TokioAsyncResolver;
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++//
 // >> Global Variable
