@@ -35,7 +35,7 @@ jobs:
         id: bump_cargo
         run: |
           cargo set-version --bump ${{ github.event.inputs['bump-type'] }}
-          NEW_VERSION=$(grep -m 1 '^version' wingfoil/Cargo.toml | awk -F'"' '{print $2}')
+          NEW_VERSION=$(grep -m 1 '^version' kdbplus/Cargo.toml | awk -F'"' '{print $2}')
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
       - name: Commit version bump
