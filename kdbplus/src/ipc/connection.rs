@@ -22,7 +22,7 @@ use tokio_native_tls::native_tls::{
     Identity, TlsAcceptor as TlsAcceptorInner, TlsConnector as TlsConnectorInner,
 };
 use tokio_native_tls::{TlsAcceptor, TlsConnector, TlsStream};
-use trust_dns_resolver::TokioAsyncResolver;
+use hickory_resolver::TokioAsyncResolver;
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++//
 // >> Global Variable
