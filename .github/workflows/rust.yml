@@ -3,17 +3,15 @@ name: CI
 on:
   push:
     branches: [ "*" ]
-    paths-ignore:
-      - ".github/workflows/**"
   pull_request:
     branches: [ "main" ]
-    paths-ignore:
-      - ".github/workflows/**"
   workflow_dispatch:      
 
 env:
   CARGO_TERM_COLOR: always
   CARGO_INCREMENTAL: 0
+  RUSTFLAGS: "-C instrument-coverage"
+  LLVM_PROFILE_FILE: "kdb-plus-fixed-%p-%m.profraw"
 
 jobs:
   ci:
@@ -61,7 +59,25 @@ jobs:
         run: cargo nextest run --no-capture
         env:
           RUST_LOG: INFO
-          
+
+      - name: Generate coverage report
+        run: |
+          grcov . \
+            --binary-path ./target/debug/ \
+            --source-dir . \
+            --output-type lcov \
+            --branch \
+            --ignore-not-existing \
+            --ignore "/*" \
+            --ignore "target/*" \
+            --output-path lcov.info
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: lcov.info
+          fail_ci_if_error: false
+
       - name: Run rustfmt
         run: |
           cargo fmt --all -- --check
