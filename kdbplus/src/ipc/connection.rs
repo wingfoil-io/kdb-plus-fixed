@@ -903,7 +903,7 @@ impl MessageHeader {
 
 //%% QStream Connector %%//vvvvvvvvvvvvvvvvvvvvvvvvvv/
 
-/// Inner function of `QStream::connect` and `connect_tls` to establish a TCP connection with the sepcified
+/// Inner function of `QStream::connect` and `connect_tls` to establish a TCP connection with the specified
 ///  endpoint. The hostname is resolved to an IP address with a system DNS resolver or parsed directly
 ///  as an IP address.
 ///
