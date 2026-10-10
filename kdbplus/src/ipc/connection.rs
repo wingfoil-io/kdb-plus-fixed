@@ -466,7 +466,7 @@ impl QStream {
     ///  connection is detected, or `TCP_NODELAY`. It also lets you resolve the host however you like.
     ///
     /// Whether the connection is local, which decides whether a large message is compressed, is
-    ///  read from the stream's peer address: a loopback address is local.
+    ///  read from the stream's peer address: a loopback address, IPv4-mapped included, is local.
     /// # Parameters
     /// - `stream`: A connected TCP stream to the target q process.
     /// - `credential`: Credential in the form of `username:password` to connect to the target q process.
@@ -487,7 +487,7 @@ impl QStream {
     /// }
     /// ```
     pub async fn from_tcp_stream(mut stream: TcpStream, credential: &str) -> Result<Self> {
-        let is_local = stream.peer_addr()?.ip().is_loopback();
+        let is_local = stream.peer_addr()?.ip().to_canonical().is_loopback();
         handshake(&mut stream, credential, "\x03\x00").await?;
         Ok(QStream::new(
             Box::new(stream),
@@ -903,7 +903,7 @@ impl MessageHeader {
 
 //%% QStream Connector %%//vvvvvvvvvvvvvvvvvvvvvvvvvv/
 
-/// Inner function of `QStream::connect` and `connect_tls` to establish a TCP connection with the sepcified
+/// Inner function of `QStream::connect` and `connect_tls` to establish a TCP connection with the specified
 ///  endpoint. The hostname is resolved to an IP address with a system DNS resolver or parsed directly
 ///  as an IP address.
 ///

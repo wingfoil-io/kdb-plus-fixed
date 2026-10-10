@@ -13,7 +13,7 @@ Dual q/kdb+ interface for API to build a shared library and an IPC client.
 
 [dependencies]
 async-trait = {version = "0.1", optional = true}
-async-recursion = "1"
+async-recursion = "1.2"
 chrono={version = "0.4", optional = true}
 once_cell = { version = "1", optional = true}
 sha1_smol = { version = "1", optional = true}
